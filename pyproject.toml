@@ -1,0 +1,40 @@
+[tool.poetry]
+name = "informer-paddle"
+version = "0.1.0"
+description = ""
+authors = ["hjs <hjs9987@outlook.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+numpy = "<2.0.0"
+matplotlib = "^3.9.2"
+pandas = "^2.2.2"
+scikit-learn = "^1.5.1"
+paddlepaddle-gpu = { version = "3.0.0b1", source = "paddle" }
+
+
+[tool.poetry.group.dev.dependencies]
+jupyterlab = "^4.2.5"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[[tool.poetry.source]]
+name = "torch"
+url = "https://download.pytorch.org/whl/cu118"
+priority = "supplemental"
+
+[[tool.poetry.source]]
+name = "paddle"
+url = "https://www.paddlepaddle.org.cn/packages/stable/cu118/"
+priority = "supplemental"
+
+[[tool.poetry.source]]
+name = "tencent"
+priority = "primary"
+url = "https://mirrors.cloud.tencent.com/pypi/simple"
+
+[tool.poetry.scripts]
+hello = 'tests.hello:say_hello'
