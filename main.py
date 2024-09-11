@@ -6,9 +6,9 @@ parser = argparse.ArgumentParser(description='[Informer] 长序列预测')
 parser.add_argument('--model', type=str, required=True, default='informer',
                     help='🏷️model of experiment, options: [informer, informerstack, informerlight(TBD)]')
 
-parser.add_argument('--data', type=str, required=True, default='WTH', help='data')
+parser.add_argument('--data', type=str, required=True, default='WTH_small', help='data')
 parser.add_argument('--root_path', type=str, default='./data/ETT/', help='root path of the data file')
-parser.add_argument('--data_path', type=str, default='WTH.csv', help='data file')
+parser.add_argument('--data_path', type=str, default='WTH_small.csv', help='data file')
 parser.add_argument('--features', type=str, default='M',
                     help='forecasting task, options:[M, S, MS]; M:multivariate predict multivariate, '
                          'S:univariate predict univariate, MS:multivariate predict univariate')
@@ -34,7 +34,7 @@ parser.add_argument('--enc_in', type=int, default=7, help='encoder input size,�
 parser.add_argument('--dec_in', type=int, default=7, help='decoder input size')
 parser.add_argument('--c_out', type=int, default=7, help='output size')
 parser.add_argument('--d_model', type=int, default=512, help='dimension of model,隐层特征数')
-parser.add_argument('--n_heads', type=int, default=8, help='num of heads,多层注意机制相关')
+parser.add_argument('--n_heads', type=int, default=8, help='num of heads,多头注意力数')
 parser.add_argument('--e_layers', type=int, default=2, help='num of encoder layers')
 parser.add_argument('--d_layers', type=int, default=1, help='num of decoder layers')
 parser.add_argument('--s_layers', type=str, default='3,2,1', help='num of stack encoder layers')
@@ -59,7 +59,7 @@ parser.add_argument('--num_workers', type=int, default=0, help='data loader num 
 parser.add_argument('--itr', type=int, default=2, help='experiments times,实验次数')
 parser.add_argument('--train_epochs', type=int, default=6, help='train epochs,🏷️跑几次epoch,就是循环跑多少次')
 parser.add_argument('--batch_size', type=int, default=32, help='batch size of train input data')
-parser.add_argument('--patience', type=int, default=3, help='early stopping patience')
+parser.add_argument('--patience', type=int, default=4, help='early stopping patience')
 parser.add_argument('--learning_rate', type=float, default=0.0001, help='optimizer learning rate')
 parser.add_argument('--des', type=str, default='test', help='exp description')
 parser.add_argument('--loss', type=str, default='mse', help='loss function,损失函数')
@@ -76,6 +76,7 @@ args = parser.parse_args()
 
 args.use_gpu = True if paddle.device.is_compiled_with_cuda() and args.use_gpu else False
 
+# 多gpu配置
 if args.use_gpu and args.use_multi_gpu:
     args.devices = args.devices.replace(' ', '')
     device_ids = args.devices.split(',')
@@ -132,17 +133,18 @@ for ii in range(args.itr):
         args.embed,
         args.distil,
         args.mix,
-        args.des, ii)
+        args.des,
+        ii)
 
     exp = Exp(args)  # set experiments
-    print('>>>>>>>start training : {}>>>>>>>>>>>>>>>>>>>>>>>>>>'.format(setting))
+    print('>>>>>>>🚀start training : {}>>>>>>>>>>>>>>>>>>>>>>>>>>'.format(setting))
     exp.train(setting)
 
-    print('>>>>>>>testing : {}<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<'.format(setting))
+    print('>>>>>>>🧪testing : {}<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<'.format(setting))
     exp.test(setting)
 
     if args.do_predict:
-        print('>>>>>>>predicting : {}<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<'.format(setting))
+        print('>>>>>>>🎲predicting : {}<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<'.format(setting))
         exp.predict(setting, True)
 
     paddle.device.cuda.empty_cache()

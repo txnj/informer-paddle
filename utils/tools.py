@@ -69,13 +69,13 @@ class StandardScaler:
         self.std = data.std(0)
 
     def transform(self, data):
-        mean = paddle.to_tensor(self.mean).type_as(data).to(data.device) if paddle.is_tensor(data) else self.mean
-        std = paddle.to_tensor(self.std).type_as(data).to(data.device) if paddle.is_tensor(data) else self.std
+        mean = paddle.to_tensor(self.mean).astype(data.dtype) if paddle.is_tensor(data) else self.mean
+        std = paddle.to_tensor(self.std).astype(data.dtype) if paddle.is_tensor(data) else self.std
         return (data - mean) / std
 
     def inverse_transform(self, data):
-        mean = paddle.to_tensor(self.mean).type_as(data).to(data.device) if paddle.is_tensor(data) else self.mean
-        std = paddle.to_tensor(self.std).type_as(data).to(data.device) if paddle.is_tensor(data) else self.std
+        mean = paddle.to_tensor(self.mean).astype(data.dtype) if paddle.is_tensor(data) else self.mean
+        std = paddle.to_tensor(self.std).astype(data.dtype) if paddle.is_tensor(data) else self.std
         if data.shape[-1] != mean.shape[-1]:
             mean = mean[-1:]
             std = std[-1:]

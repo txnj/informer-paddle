@@ -7,20 +7,41 @@ from models.embed import DataEmbedding
 
 
 class Informer(nn.Layer):
-    def __init__(self, enc_in, dec_in, c_out, seq_len, label_len, out_len,
-                 factor=5, d_model=512, n_heads=8, e_layers=3, d_layers=2, d_ff=512,
-                 dropout=0.0, attn='prob', embed='fixed', freq='h', activation='gelu',
-                 output_attention=False, distil=True, mix=True,
-                 device=paddle.CUDAPlace(0)):
+    def __init__(self, enc_in,
+                 dec_in,
+                 c_out,
+                 seq_len,
+                 label_len,
+                 out_len,
+                 factor=5,
+                 d_model=512,
+                 n_heads=8,
+                 e_layers=3,
+                 d_layers=2,
+                 d_ff=512,
+                 dropout=0.0,
+                 attn='prob',
+                 embed='fixed',
+                 freq='h',
+                 activation='gelu',
+                 output_attention=False,
+                 distil=True,
+                 mix=True):
         super(Informer, self).__init__()
-        self.pred_len = out_len
+        self.pred_len = out_len  # 预测长度
         self.attn = attn
         self.output_attention = output_attention
 
-        # Encoding
+        # embedding
+        # 将输入数据转换为固定维度的嵌入向量,同时加入时间信息编码
+        # enc_in: 输入特征的维度
+        # d_model: 模型的维度,即嵌入向量的维度
+        # embed: 嵌入类型,预定义的嵌入方法
+        # freq: 时间特征编码的频率
+        # dropout: Dropout率,用于防止过拟合
         self.enc_embedding = DataEmbedding(enc_in, d_model, embed, freq, dropout)
         self.dec_embedding = DataEmbedding(dec_in, d_model, embed, freq, dropout)
-        # Attention
+        # 这里使用ProbAttention,这也是Informer论文提到关键点
         attn = ProbAttention if attn == 'prob' else FullAttention
         # Encoder
         self.encoder = Encoder(
@@ -58,8 +79,7 @@ class Informer(nn.Layer):
             ],
             norm_layer=paddle.nn.LayerNorm(d_model)
         )
-        # self.end_conv1 = nn.Conv1d(in_channels=label_len+out_len, out_channels=out_len, kernel_size=1, bias=True)
-        # self.end_conv2 = nn.Conv1d(in_channels=d_model, out_channels=c_out, kernel_size=1, bias=True)
+
         self.projection = nn.Linear(d_model, c_out, bias_attr=True)
 
     def forward(self, x_enc, x_mark_enc, x_dec, x_mark_dec,
@@ -72,20 +92,17 @@ class Informer(nn.Layer):
         dec_out = self.decoder(dec_out, enc_out, x_mask=dec_self_mask, cross_mask=dec_enc_mask)
         dec_out = self.projection(dec_out)
 
-        # dec_out = self.end_conv1(dec_out)
-        # dec_out = self.end_conv2(dec_out.transpose(2,1)).transpose(1,2)
         if self.output_attention:
             return dec_out[:, -self.pred_len:, :], attns
         else:
-            return dec_out[:, -self.pred_len:, :]  # [B, L, D]
+            return dec_out[:, -self.pred_len:, :]
 
 
 class InformerStack(nn.Layer):
     def __init__(self, enc_in, dec_in, c_out, seq_len, label_len, out_len,
                  factor=5, d_model=512, n_heads=8, d_layers=2, d_ff=512,
                  dropout=0.0, attn='prob', embed='fixed', freq='h', activation='gelu',
-                 output_attention=False, distil=True, mix=True,
-                 device=paddle.CUDAPlace(0)):
+                 output_attention=False, distil=True, mix=True):
         e_layers = [3, 2, 1]
         super(InformerStack, self).__init__()
         self.pred_len = out_len
@@ -138,8 +155,7 @@ class InformerStack(nn.Layer):
             ],
             norm_layer=paddle.nn.LayerNorm(d_model)
         )
-        # self.end_conv1 = nn.Conv1d(in_channels=label_len+out_len, out_channels=out_len, kernel_size=1, bias=True)
-        # self.end_conv2 = nn.Conv1d(in_channels=d_model, out_channels=c_out, kernel_size=1, bias=True)
+
         self.projection = nn.Linear(d_model, c_out, bias_attr=True)
 
     def forward(self, x_enc, x_mark_enc, x_dec, x_mark_dec,
@@ -151,9 +167,7 @@ class InformerStack(nn.Layer):
         dec_out = self.decoder(dec_out, enc_out, x_mask=dec_self_mask, cross_mask=dec_enc_mask)
         dec_out = self.projection(dec_out)
 
-        # dec_out = self.end_conv1(dec_out)
-        # dec_out = self.end_conv2(dec_out.transpose(2,1)).transpose(1,2)
         if self.output_attention:
             return dec_out[:, -self.pred_len:, :], attns
         else:
-            return dec_out[:, -self.pred_len:, :]  # [B, L, D]
+            return dec_out[:, -self.pred_len:, :]

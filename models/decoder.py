@@ -45,8 +45,8 @@ class DecoderLayer(nn.Layer):
         )[0])
 
         y = x = self.norm2(x)
-        y = self.dropout(self.activation(self.conv1(y.transpose(-1, 1))))
-        y = self.dropout(self.conv2(y).transpose(-1, 1))
+        y = self.dropout(self.activation(self.conv1(paddle.transpose(y, perm=[0, 2, 1]))))
+        y = self.dropout(paddle.transpose(self.conv2(y), perm=[0, 2, 1]))
 
         return self.norm3(x + y)
 

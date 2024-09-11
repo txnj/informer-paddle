@@ -1,6 +1,7 @@
 from typing import List
 
 import numpy as np
+import paddle
 import pandas as pd
 from pandas.tseries import offsets
 from pandas.tseries.frequencies import to_offset
@@ -168,3 +169,4 @@ def time_features(dates, timeenc=1, freq='h'):
     if timeenc == 1:
         dates = pd.to_datetime(dates.date.values)
         return np.vstack([feat(dates) for feat in time_features_from_frequency_str(freq)]).transpose(1, 0)
+

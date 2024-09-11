@@ -11,7 +11,7 @@ numpy = "<2.0.0"
 matplotlib = "^3.9.2"
 pandas = "^2.2.2"
 scikit-learn = "^1.5.1"
-paddlepaddle-gpu = { version = "3.0.0b1", source = "paddle" }
+paddlepaddle = {version = "3.0.0b1", source = "paddle"}
 
 
 [tool.poetry.group.dev.dependencies]
@@ -28,7 +28,8 @@ priority = "supplemental"
 
 [[tool.poetry.source]]
 name = "paddle"
-url = "https://www.paddlepaddle.org.cn/packages/stable/cu118/"
+url = "https://www.paddlepaddle.org.cn/packages/stable/cpu/"
+#url = "https://www.paddlepaddle.org.cn/packages/stable/cu118/"
 priority = "supplemental"
 
 [[tool.poetry.source]]

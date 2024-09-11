@@ -8,7 +8,7 @@ import paddle.nn as nn
 class ConvLayer(nn.Layer):
     def __init__(self, c_in):
         super(ConvLayer, self).__init__()
-        padding = 1 if paddle.__version__ >= '1.5.0' else 2
+        padding = 1
         self.downConv = nn.Conv1D(in_channels=c_in,
                                   out_channels=c_in,
                                   kernel_size=3,
@@ -19,23 +19,15 @@ class ConvLayer(nn.Layer):
         self.maxPool = nn.MaxPool1D(kernel_size=3, stride=2, padding=1)
 
     def forward(self, x):
-        x = self.downConv(x.permute(0, 2, 1))
+        # ✏️x = self.downConv(x.permute(0, 2, 1))
+        x = self.downConv(paddle.transpose(x, perm=[0, 2, 1]))
         x = self.norm(x)
         x = self.activation(x)
         x = self.maxPool(x)
-        x = x.transpose(1, 2)
+        x = paddle.transpose(x, perm=[0, 2, 1])
         return x
 
 
-# 这是一个PaddlePaddle的EncoderLayer类，继承自nn.Layer。
-# 在初始化方法中，它定义了几个成员变量，包括self.attention（一个自注意力机制的实例），self.conv1（一个1D卷积层实例），self.conv2（另一个1D卷积层实例），self.norm1（一个规范化层实例），self.norm2（另一个规范化层实例）和self.dropout（一个dropout层实例）。
-# 其中，d_ff是一个可选参数，默认为4*d_model。
-# 在forward方法中，它接收一个输入张量x和一个可选参数attn_mask（一个注意力掩码张量）。
-# 首先，它使用self.attention实例处理x、自身和自身，将结果加到x上，得到新的x。
-# 这个处理包括使用自注意力机制计算x、自身和自身之间的相似度，然后应用softmax函数得到注意力权重，最后将结果加到x上。
-# 接着，它将新的x通过规范化层self.norm1、激活函数层self.activation、卷积层self.conv1、转置张量、规范化层self.norm2、dropout层self.dropout和激活函数层self.activation处理，得到最终的输出张量。
-# 其中，self.attention的返回值包括新的张量new_x和注意力权重attn。
-# 最后，它通过将x作为输入并将注意力权重设置为None，在不需要的情况下禁用自注意力机制来创建具有attention_mask参数的forward方法。
 class EncoderLayer(nn.Layer):
     def __init__(self, attention, d_model, d_ff=None, dropout=0.1, activation="relu"):
         super(EncoderLayer, self).__init__()
@@ -49,12 +41,6 @@ class EncoderLayer(nn.Layer):
         self.activation = paddle.nn.functional.relu if activation == "relu" else paddle.nn.functional.gelu
 
     def forward(self, x, attn_mask=None):
-        # x [B, L, D]
-        # x = x + self.dropout(self.attention(
-        #     x, x, x,
-        #     attn_mask = attn_mask
-        # ))
-        # Q,K,V
         new_x, attn = self.attention(
             x, x, x,
             attn_mask=attn_mask
@@ -62,9 +48,8 @@ class EncoderLayer(nn.Layer):
         x = x + self.dropout(new_x)
 
         y = x = self.norm1(x)
-        y = self.dropout(self.activation(self.conv1(y.transpose(-1, 1))))
-        y = self.dropout(self.conv2(y).transpose(-1, 1))
-
+        y = self.dropout(self.activation(self.conv1(paddle.transpose(y, perm=[0, 2, 1]))))
+        y = self.dropout(paddle.transpose(self.conv2(y), perm=[0, 2, 1]))
         return self.norm2(x + y), attn
 
 
@@ -83,12 +68,11 @@ class Encoder(nn.Layer):
         self.norm = norm_layer
 
     def forward(self, x, attn_mask=None):
-        # x [B, L, D]
         attns = []
         if self.conv_layers is not None:
             for attn_layer, conv_layer in zip(self.attn_layers, self.conv_layers):
                 x, attn = attn_layer(x, attn_mask=attn_mask)
-                x = conv_layer(x)
+                x = conv_layer(x)  # polling后再减半,提升速度
                 attns.append(attn)
             x, attn = self.attn_layers[-1](x, attn_mask=attn_mask)
             attns.append(attn)
@@ -103,12 +87,6 @@ class Encoder(nn.Layer):
         return x, attns
 
 
-# 这是一个PaddlePaddle的EncoderStack类，继承自nn.Layer。
-# 在初始化方法中，它接受一个encoders列表和一个inp_lens列表作为参数。encoders列表包含了多个Encoder实例，inp_lens列表包含了每个Encoder实例对应的输入序列长度。
-# 在forward方法中，它接收一个输入张量x和一个可选参数attn_mask（一个注意力掩码张量）。
-# 首先，它遍历self.encoders中的每个Encoder实例，并使用zip函数将它们与self.inp_lens中的对应输入序列长度配对。
-# 对于每个配对，它使用Encoder实例处理x[:, -inp_len:, :]，并将结果添加到x_stack列表中。同时，它也将每个Encoder实例的注意力张量添加到attns列表中。
-# 最后，它将x_stack列表中的所有张量沿着第2维度（即时间维度）连接起来，并返回处理后的x_stack和每个Encoder实例的注意力张量列表attns。
 class EncoderStack(nn.Layer):
     def __init__(self, encoders, inp_lens):
         super(EncoderStack, self).__init__()
@@ -124,6 +102,6 @@ class EncoderStack(nn.Layer):
             x_s, attn = encoder(x[:, -inp_len:, :])
             x_stack.append(x_s)
             attns.append(attn)
-        x_stack = paddle.concat(x_stack, -2)
+        x_stack = paddle.concat(x_stack, axis=-2)
 
         return x_stack, attns

@@ -30,6 +30,7 @@ class Exp_Informer(Exp_Basic):
         }
         if self.args.model == 'informer' or self.args.model == 'informerstack':
             e_layers = self.args.e_layers if self.args.model == 'informer' else self.args.s_layers
+            # 构建model
             model = model_dict[self.args.model](
                 self.args.enc_in,
                 self.args.dec_in,
@@ -40,7 +41,7 @@ class Exp_Informer(Exp_Basic):
                 self.args.factor,
                 self.args.d_model,
                 self.args.n_heads,
-                e_layers,  # self.args.e_layers,
+                e_layers,
                 self.args.d_layers,
                 self.args.d_ff,
                 self.args.dropout,
@@ -51,9 +52,7 @@ class Exp_Informer(Exp_Basic):
                 self.args.output_attention,
                 self.args.distil,
                 self.args.mix,
-                self.device
-            ).float()
-
+            )
             if self.args.use_multi_gpu and self.args.use_gpu:
                 model = paddle.DataParallel(model)
             return model
@@ -226,8 +225,8 @@ class Exp_Informer(Exp_Basic):
         preds = np.array(preds)
         trues = np.array(trues)
         print('test shape:', preds.shape, trues.shape)
-        preds = preds.reshape(-1, preds.shape[-2], preds.shape[-1])
-        trues = trues.reshape(-1, trues.shape[-2], trues.shape[-1])
+        preds = preds.reshape([-1, preds.shape[-2], preds.shape[-1]])
+        trues = trues.reshape([-1, trues.shape[-2], trues.shape[-1]])
         print('test shape:', preds.shape, trues.shape)
 
         # result save
@@ -262,7 +261,7 @@ class Exp_Informer(Exp_Basic):
             preds.append(pred.detach().cpu().numpy())
 
         preds = np.array(preds)
-        preds = preds.reshape(-1, preds.shape[-2], preds.shape[-1])
+        preds = preds.reshape([-1, preds.shape[-2], preds.shape[-1]])
 
         # result save
         folder_path = './results/' + setting + '/'
@@ -274,12 +273,12 @@ class Exp_Informer(Exp_Basic):
         return
 
     def _process_one_batch(self, dataset_object, batch_x, batch_y, batch_x_mark, batch_y_mark):
-        batch_x = batch_x.float().to(self.device)
-        batch_y = batch_y.float()
+        batch_x = batch_x.astype(paddle.float32)
+        batch_y = batch_y.astype(paddle.float32)
 
         # 进行encode 和 decode会需要x_mark和y_mark,所以都要to(device)
-        batch_x_mark = batch_x_mark.float().to(self.device)
-        batch_y_mark = batch_y_mark.float().to(self.device)
+        batch_x_mark = batch_x_mark.astype(paddle.float32)
+        batch_y_mark = batch_y_mark.astype(paddle.float32)
 
         if self.args.padding == 0:
             # decoder输入,以torch.zeros为初始化进行构建(32,24,12),默认padding为0
@@ -287,12 +286,12 @@ class Exp_Informer(Exp_Basic):
             dec_inp = paddle.zeros([batch_y.shape[0], self.args.pred_len, batch_y.shape[-1]], dtype='float32')
         elif self.args.padding == 1:
             # ✏️dec_inp = paddle.ones([batch_y.shape[0], self.args.pred_len, batch_y.shape[-1]]).float()
-            dec_inp = paddle.ones([batch_y.shape[0], self.args.pred_len, batch_y.shape[-1]], dtype='float32')
+            dec_inp = paddle.ones(shape=[batch_y.shape[0], self.args.pred_len, batch_y.shape[-1]], dtype='float32')
         else:
             raise ValueError('padding must be 0 or 1')
         # 拼接decoder输入,torch.cat在维度1(数据条数)上拼接预测值dep_inp(全0值)
         # ✏️dec_inp = paddle.concat([batch_y[:, :self.args.label_len, :], dec_inp], dim=1).float().to(self.device)
-        dec_inp = paddle.concat([batch_y[:, :self.args.label_len, :], dec_inp], axis=1).float().to(self.device)
+        dec_inp = paddle.concat([batch_y[:, :self.args.label_len, :], dec_inp], axis=1).astype('float32')
         # dec_inp长度为72，其中前48为真实值，后面24个是要预测的值（用0初始化）
         if self.args.use_amp:
             with paddle.amp.auto_cast():
@@ -308,6 +307,6 @@ class Exp_Informer(Exp_Basic):
         if self.args.inverse:
             outputs = dataset_object.inverse_transform(outputs)
         f_dim = -1 if self.args.features == 'MS' else 0
-        batch_y = batch_y[:, -self.args.pred_len:, f_dim:].to(self.device)
+        batch_y = batch_y[:, -self.args.pred_len:, f_dim:]
 
         return outputs, batch_y
