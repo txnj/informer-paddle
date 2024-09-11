@@ -1,6 +1,11 @@
 import argparse
 import paddle
 from exp.exp_informer import Exp_Informer
+from paddle import utils
+import sys
+
+utils.run_check()
+print('🛶🛶🛶')
 
 parser = argparse.ArgumentParser(description='[Informer] 长序列预测')
 parser.add_argument('--model', type=str, required=True, default='informer',

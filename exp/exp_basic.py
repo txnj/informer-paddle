@@ -16,7 +16,7 @@ class Exp_Basic(object):
             os.environ["CUDA_VISIBLE_DEVICES"] = str(
                 self.args.gpu) if not self.args.use_multi_gpu else self.args.devices
             device = paddle.device.set_device('gpu:{}'.format(self.args.gpu))
-            print('🖥️Use GPU: cuda:{}'.format(self.args.gpu))
+            print('🖥️Use GPU: cuda:{},🔢可用GPU数量:{}'.format(self.args.gpu, paddle.device.cuda.device_count()))
         else:
             device = paddle.device.set_device("cpu")
             print(f'🏿Use CPU:{device}')

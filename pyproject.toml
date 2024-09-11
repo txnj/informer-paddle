@@ -29,7 +29,6 @@ priority = "supplemental"
 [[tool.poetry.source]]
 name = "paddle"
 url = "https://www.paddlepaddle.org.cn/packages/stable/cpu/"
-#url = "https://www.paddlepaddle.org.cn/packages/stable/cu118/"
 priority = "supplemental"
 
 [[tool.poetry.source]]
