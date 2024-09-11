@@ -148,3 +148,4 @@ for ii in range(args.itr):
         exp.predict(setting, True)
 
     paddle.device.cuda.empty_cache()
+    print('🚩执行结束🚩')
