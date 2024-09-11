@@ -5,13 +5,17 @@ description = ""
 authors = ["hjs <hjs9987@outlook.com>"]
 readme = "README.md"
 
+packages = [
+    { include = "informer_paddle" },
+]
+
 [tool.poetry.dependencies]
 python = "^3.10"
 numpy = "<2.0.0"
 matplotlib = "^3.9.2"
 pandas = "^2.2.2"
 scikit-learn = "^1.5.1"
-paddlepaddle = {version = "3.0.0b1", source = "paddle"}
+paddlepaddle = { version = "3.0.0b1", source = "paddle" }
 
 
 [tool.poetry.group.dev.dependencies]

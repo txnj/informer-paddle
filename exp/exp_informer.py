@@ -71,7 +71,7 @@ class Exp_Informer(Exp_Basic):
             'custom': Dataset_Custom,
             'my_data': Dataset_Custom,
         }
-        Data = data_dict[self.args.data]
+        dataset_class = data_dict[self.args.data]
         timeenc = 0 if args.embed != 'timeF' else 1
 
         if flag == 'test':  # 测试
@@ -84,13 +84,13 @@ class Exp_Informer(Exp_Basic):
             drop_last = False
             batch_size = 1
             freq = args.detail_freq
-            Data = Dataset_Pred
+            dataset_class = Dataset_Pred
         else:
             shuffle_flag = True  # 训练时,是否洗牌
             drop_last = True  # 丢掉最后不足一个batch的数据,比如321条数据,batch_size:32,就会丢调最后一条数据
             batch_size = args.batch_size
             freq = args.freq
-        data_set = Data(  # 定义data_set
+        data_set = dataset_class(  # 定义data_set
             root_path=args.root_path,
             data_path=args.data_path,
             flag=flag,
@@ -246,7 +246,7 @@ class Exp_Informer(Exp_Basic):
         pred_data, pred_loader = self._get_data(flag='pred')
 
         if load:
-            path = os.path.join(self.args.checkpoints, setting)
+            path = os.path.join(self.args.checkpoints.removeprefix('.'), setting)
             best_model_path = path + '/' + 'checkpoint.pth'
             self.model.set_state_dict(paddle.load(best_model_path))
 

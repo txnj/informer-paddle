@@ -1,8 +1,9 @@
 import argparse
+import os
+
 import paddle
 from exp.exp_informer import Exp_Informer
 from paddle import utils
-import sys
 
 utils.run_check()
 print('🛶🛶🛶')
@@ -12,7 +13,7 @@ parser.add_argument('--model', type=str, required=True, default='informer',
                     help='🏷️model of experiment, options: [informer, informerstack, informerlight(TBD)]')
 
 parser.add_argument('--data', type=str, required=True, default='WTH_small', help='data')
-parser.add_argument('--root_path', type=str, default='./data/', help='root path of the data file')
+parser.add_argument('--root_path', type=str, default='./data/', help='root path of the data file,传入相对路径')
 parser.add_argument('--data_path', type=str, default='WTH_small.csv', help='data file')
 parser.add_argument('--features', type=str, default='M',
                     help='forecasting task, options:[M, S, MS]; M:multivariate predict multivariate, '
