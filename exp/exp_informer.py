@@ -1,4 +1,4 @@
-from data.data_loader import Dataset_ETT_hour, Dataset_ETT_minute, Dataset_Custom, Dataset_Pred
+from data_loader.data_loader import Dataset_ETT_hour, Dataset_ETT_minute, Dataset_Custom, Dataset_Pred
 from exp.exp_basic import Exp_Basic
 from models.model import Informer, InformerStack
 
@@ -8,7 +8,6 @@ from utils.metrics import metric
 import numpy as np
 import paddle
 import paddle.nn as nn
-from paddle import optimizer
 from paddle.io import DataLoader
 
 import os
@@ -115,7 +114,7 @@ class Exp_Informer(Exp_Basic):
         return data_set, data_loader
 
     def _select_optimizer(self):
-        model_optim = optimizer.Adam(learning_rate=self.args.learning_rate, parameters=self.model.parameters())
+        model_optim = paddle.optimizer.Adam(parameters=self.model.parameters(), learning_rate=self.args.learning_rate)
         return model_optim
 
     @staticmethod
@@ -204,7 +203,7 @@ class Exp_Informer(Exp_Basic):
             adjust_learning_rate(model_optim, epoch + 1, self.args)
 
         best_model_path = path + '/' + 'checkpoint.pth'
-        self.model.load_state_dict(paddle.load(best_model_path))
+        self.model.set_state_dict(paddle.load(best_model_path))
 
         return self.model
 
@@ -249,7 +248,7 @@ class Exp_Informer(Exp_Basic):
         if load:
             path = os.path.join(self.args.checkpoints, setting)
             best_model_path = path + '/' + 'checkpoint.pth'
-            self.model.load_state_dict(paddle.load(best_model_path))
+            self.model.set_state_dict(paddle.load(best_model_path))
 
         self.model.eval()
 

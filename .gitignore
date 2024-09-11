@@ -162,7 +162,6 @@ poetry.lock
 MNIST/
 data/flower_data/
 ETT/
-ETT/*
 checkpoints/
 results/
-results/*
+data/

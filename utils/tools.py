@@ -15,8 +15,8 @@ def adjust_learning_rate(optimizer, epoch, args):
         raise NotImplementedError
     if epoch in lr_adjust.keys():
         lr = lr_adjust[epoch]
-        for param_group in optimizer.param_groups:
-            param_group['lr'] = lr
+        for param_group in optimizer._param_groups:
+            param_group.optimize_attr['learning_rate'] = lr
         print('Updating learning rate to {}'.format(lr))
 
 
