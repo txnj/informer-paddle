@@ -3,33 +3,35 @@ import paddle
 from utils.tools import dotdict
 
 
-def say():
-    print("say hello")
-
-
-def get_wth_args() -> dotdict:
-    path_prefix = 'd:'  # '.'
+def get_crypto_args(
+        root_prefix='d:',
+        model='informer',
+        data='BTC',
+        filename='binance_btc_usdt_2020.csv',
+        freq='h',
+        train_epochs=6,
+) -> dotdict:
     args = dotdict()
-    args.model = 'informer'
-    args.data = 'WTH_small'
-    args.root_path = path_prefix + '/data/'
-    args.data_path = 'WTH_small.csv'
+    args.model = model
+    args.data = data
+    args.root_path = root_prefix + '/data/'
+    args.data_path = filename
     args.features = 'M'
-    args.target = 'OT'
-    args.freq = 'h'
-    args.checkpoints = path_prefix + '/checkpoints/'
+    args.target = 'OT'  # target feature in S or MS task
+    args.freq = freq
+    args.checkpoints = root_prefix + '/checkpoints/'
     args.seq_len = 96
     args.label_len = 48
     args.pred_len = 24
     # ─── ⋆⋅☆⋅⋆ ──
-    args.enc_in = 12
-    args.dec_in = 12
-    args.c_out = 12
+    args.enc_in = 7  # encoder input size
+    args.dec_in = 7  # decoder input size
+    args.c_out = 7  # output size
     args.d_model = 512
     args.n_heads = 8
-    args.e_layers = 2
-    args.d_layers = 1
-    args.s_layers = '3,2,1'
+    args.e_layers = 2  # num of encoder layers
+    args.d_layers = 1  # num of decoder layers
+    args.s_layers = '3,2,1'  # num of stack encoder layers
     args.d_ff = 2048
     args.factor = 5
     args.padding = 0
@@ -38,17 +40,17 @@ def get_wth_args() -> dotdict:
     args.attn = 'prob'
     args.embed = 'timeF'
     args.activation = 'gelu'
-    args.output_attention = True
+    args.output_attention = True  # whether to output attention in ecoder
+    args.do_predict = False  # whether to predict unseen future data
     args.mix = True
     args.num_workers = 0
-    args.itr = 1
-    args.train_epochs = 6
+    args.itr = 1  # 要训练的次数
+    args.train_epochs = train_epochs  # 跑几次epoch,就是循环跑多少次
     args.batch_size = 32
-    args.patience = 4  # early stopping patience
+    args.patience = 3  # early stopping patience
     args.learning_rate = 0.0001
-    args.des = 'test'
     args.loss = 'mse'
-    args.lradj = 'type1'
+    args.lradj = 'type1'  # adjust learning rate
     args.use_amp = False
     args.inverse = False
     args.use_gpu = True if paddle.device.is_compiled_with_cuda() else False

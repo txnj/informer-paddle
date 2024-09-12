@@ -69,7 +69,7 @@ class Exp_Informer(Exp_Basic):
             'ECL': Dataset_Custom,
             'Solar': Dataset_Custom,
             'custom': Dataset_Custom,
-            'my_data': Dataset_Custom,
+            'BTC': Dataset_Custom,
         }
         dataset_class = data_dict[self.args.data]
         timeenc = 0 if args.embed != 'timeF' else 1
@@ -90,6 +90,7 @@ class Exp_Informer(Exp_Basic):
             drop_last = True  # 丢掉最后不足一个batch的数据,比如321条数据,batch_size:32,就会丢调最后一条数据
             batch_size = args.batch_size
             freq = args.freq
+            
         data_set = dataset_class(  # 定义data_set
             root_path=args.root_path,
             data_path=args.data_path,
@@ -102,7 +103,7 @@ class Exp_Informer(Exp_Basic):
             freq=freq,
             cols=args.cols
         )
-        print(f'📑_get_data处理结束,flag:【{flag}】,data_set.length:【{len(data_set)}】')
+        print(f'📑_get_data结束,flag:【{flag}】,data_set.length:【{len(data_set)}】')
         # 构建 torch DataLoader
         data_loader = DataLoader(
             data_set,

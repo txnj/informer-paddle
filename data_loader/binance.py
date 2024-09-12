@@ -71,7 +71,7 @@ def deduplicated(_file_path: str, _column_name: str):
 
 
 if __name__ == '__main__':
-    file_path = './binance_btc_usdt_2020.csv'
+    file_path = '../data/binance_btc_usdt_2020.csv'
     symbol = 'BTCUSDT'
     interval = '1h'
     deduplicated_column_name = 'OpenTime'
