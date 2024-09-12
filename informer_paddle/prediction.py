@@ -23,21 +23,28 @@ def predict(exp, setting, load=False):
 
         # decoder input
         if exp.args.padding == 0:
-            dec_inp = paddle.zeros([batch_y.shape[0], exp.args.pred_len, batch_y.shape[-1]])
+            dec_inp = paddle.zeros([batch_y.shape[0], exp.args.pred_len, batch_y.shape[-1]], dtype='float32')
         elif exp.args.padding == 1:
-            dec_inp = paddle.ones([batch_y.shape[0], exp.args.pred_len, batch_y.shape[-1]])
+            dec_inp = paddle.ones([batch_y.shape[0], exp.args.pred_len, batch_y.shape[-1]], dtype='float32')
         else:
-            dec_inp = paddle.zeros([batch_y.shape[0], exp.args.pred_len, batch_y.shape[-1]])
-        dec_inp = paddle.concat([batch_y[:, :exp.args.label_len, :], dec_inp], axis=1)
+            dec_inp = paddle.zeros([batch_y.shape[0], exp.args.pred_len, batch_y.shape[-1]]).float()
+        dec_inp = paddle.concat([batch_y[:, :exp.args.label_len, :], dec_inp], axis=1).astype('float32')
         # encoder - decoder
-        if exp.args.output_attention:
-            outputs = exp.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)[0]
+        if exp.args.use_amp:
+            with paddle.amp.auto_cast():
+                if exp.args.output_attention:
+                    outputs = exp.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)[0]
+                else:
+                    outputs = exp.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
         else:
-            outputs = exp.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
+            if exp.args.output_attention:
+                outputs = exp.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)[0]
+            else:
+                outputs = exp.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
         f_dim = -1 if exp.args.features == 'MS' else 0
         batch_y = batch_y[:, -exp.args.pred_len:, f_dim:]
 
-        pred = outputs.detach().cpu().numpy()  # .squeeze()
+        pred = outputs.detach().cpu().numpy()
 
         preds.append(pred)
 
