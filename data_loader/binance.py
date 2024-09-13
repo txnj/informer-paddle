@@ -32,7 +32,7 @@ def btc_history_candles(_file_path: str, _symbol: str, _interval: str, limit: in
         return
     # 将JSON数据转换为DataFrame
     df = pd.DataFrame(data, columns=[
-        'OpenTime',  # k线开盘时间
+        'date',  # k线开盘时间
         'OpeningPx',  # 开盘价格
         'HighestPx',  # 最高价格
         'LowestPx',  # 最低价格
@@ -49,10 +49,10 @@ def btc_history_candles(_file_path: str, _symbol: str, _interval: str, limit: in
     df = df.drop(['CloseTime'], axis=1)
     print(df.shape)
     tz = pytz.timezone('Asia/Shanghai')
-    df['OpenTime'] = pd.to_datetime(df['OpenTime'], unit='ms', utc=True).dt.tz_convert('Asia/Shanghai').dt.strftime(
+    df['date'] = pd.to_datetime(df['date'], unit='ms', utc=True).dt.tz_convert('Asia/Shanghai').dt.strftime(
         '%Y-%m-%d %H:%M')
     # 创建一个不包含 'Time' 的列名列表
-    columns_to_float = [col for col in df.columns if col != 'OpenTime' and col != 'Count']
+    columns_to_float = [col for col in df.columns if col != 'date' and col != 'Count']
     # 将特定列转换为 float 类型
     df[columns_to_float] = df[columns_to_float].astype(float)
 
@@ -74,7 +74,7 @@ if __name__ == '__main__':
     file_path = '../data/binance_btc_usdt_2020.csv'
     symbol = 'BTCUSDT'
     interval = '1h'
-    deduplicated_column_name = 'OpenTime'
+    deduplicated_column_name = 'date'
     count = 0
     while count < 2:
         btc_history_candles(file_path, symbol, interval, limit=1000)

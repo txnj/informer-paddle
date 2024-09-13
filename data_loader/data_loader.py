@@ -232,20 +232,25 @@ class Dataset_Custom(Dataset):
         df_raw.columns: ['date', ...(other features), target feature]
         '''
         # cols = list(df_raw.columns); 
-        if self.cols:
+        if self.cols:  # 如果指定输入列
             cols = self.cols.copy()
-            cols.remove(self.target)
+            if self.features != 'M':
+                cols.remove(self.target)  # 移除目标列
         else:
-            cols = list(df_raw.columns)
-            cols.remove(self.target)
-            cols.remove('date')
-        df_raw = df_raw[['date'] + cols + [self.target]]
+            cols = list(df_raw.columns)  # 所有列
+            if self.features != 'M':
+                cols.remove(self.target)
+            cols.remove('date')  # 移除时间列
+        if self.features == 'M':
+            df_raw = df_raw[['date'] + cols]  # 日期列+特征列+目标列
+        else:
+            df_raw = df_raw[['date'] + cols + [self.target]]  # 日期列+特征列+目标列
         # mf注-数据切分-这里需要根据需求来改
         num_train = int(len(df_raw) * 0.7)
         num_test = int(len(df_raw) * 0.2)
         num_vali = len(df_raw) - num_train - num_test
         border1s = [0, num_train - self.seq_len, len(df_raw) - num_test - self.seq_len]
-        border2s = [num_train, num_train + num_vali, len(df_raw)]  # mf-video_time:58.11
+        border2s = [num_train, num_train + num_vali, len(df_raw)]
         border1 = border1s[self.set_type]
         border2 = border2s[self.set_type]
 
@@ -256,16 +261,18 @@ class Dataset_Custom(Dataset):
             df_data = df_raw[[self.target]]
         else:
             raise ValueError('Features can only be M,MS or S')
-
         if self.scale:
             train_data = df_data[border1s[0]:border2s[0]]
             self.scaler.fit(train_data.values)
-            data = self.scaler.transform(df_data.values)
+            data = self.scaler.transform(df_data.values)  # 标准化操作操作
+            # data = self.scaler.inverse_transform(data) # inverse_transform反解析
         else:
             data = df_data.values
+        # df_data.values:DataFrame 的底层数据作为一个NumPy数组,这个数组包含 DataFrame 中的所有值,不包括索引和列名
         # 日期时间特征
         df_stamp = df_raw[['date']][border1:border2]
         df_stamp['date'] = pd.to_datetime(df_stamp.date)
+        # 单独处理时间特征
         data_stamp = time_features(df_stamp, timeenc=self.timeenc, freq=self.freq)
 
         self.data_x = data[border1:border2]  # 提取训练数据

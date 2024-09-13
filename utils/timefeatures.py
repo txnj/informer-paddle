@@ -1,7 +1,6 @@
 from typing import List
 
 import numpy as np
-import paddle
 import pandas as pd
 from pandas.tseries import offsets
 from pandas.tseries.frequencies import to_offset

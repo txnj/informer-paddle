@@ -90,7 +90,7 @@ class Exp_Informer(Exp_Basic):
             drop_last = True  # 丢掉最后不足一个batch的数据,比如321条数据,batch_size:32,就会丢调最后一条数据
             batch_size = args.batch_size
             freq = args.freq
-            
+
         data_set = dataset_class(  # 定义data_set
             root_path=args.root_path,
             data_path=args.data_path,
@@ -103,8 +103,8 @@ class Exp_Informer(Exp_Basic):
             freq=freq,
             cols=args.cols
         )
-        print(f'📑_get_data结束,flag:【{flag}】,data_set.length:【{len(data_set)}】')
-        # 构建 torch DataLoader
+        print(f'📑数据初始化结束,flag:【{flag}】,data_set.length:【{len(data_set)}】')
+        # 构建 DataLoader
         data_loader = DataLoader(
             data_set,
             batch_size=batch_size,
@@ -152,9 +152,10 @@ class Exp_Informer(Exp_Basic):
 
         model_optim = self._select_optimizer()  # 指定优化器:Adam
         criterion = self._select_criterion()  # 损失函数:MSELoss
+        scaler = None
+        if self.args.use_amp:  # ✏️mf-windows中不需要加这个，容易崩，Linus可以加
+            scaler = paddle.amp.GradScaler()  # mf-这里暂时没有改
 
-        # if self.args.use_amp:  # ✏️mf-windows中不需要加这个，容易崩，Linus可以加
-        #     scaler = torch.cuda.amp.GradScaler()  # mf-这里暂时没有改
         # 🏷️循环指定的epochs次数,默认值为6
         for epoch in range(self.args.train_epochs):
             iter_count = 0
@@ -181,13 +182,13 @@ class Exp_Informer(Exp_Basic):
                     iter_count = 0
                     time_now = time.time()
 
-                # ✏️if self.args.use_amp:
-                #     scaler.scale(loss).backward()
-                #     scaler.step(model_optim)
-                #     scaler.update()
-                # else:
-                loss.backward()
-                model_optim.step()
+                if scaler and self.args.use_amp:
+                    scaler.scale(loss).backward()
+                    scaler.step(model_optim)
+                    scaler.update()
+                else:
+                    loss.backward()
+                    model_optim.step()
 
             print("Epoch: {} cost time: {}".format(epoch + 1, time.time() - epoch_time))
             train_loss = np.average(train_loss)
